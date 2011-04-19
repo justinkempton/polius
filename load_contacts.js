@@ -3,7 +3,7 @@ require.paths.unshift('/usr/local/lib/node');
 var sys = require('sys'), 
 	request = require('request'), 
 	h = {accept:'application/json', 'content-type':'application/json'},
-	_up = 'polius.cloudant.com/', _user = "", _pass = "", _db = "";
+	_up = 'polius.cloudant.com', _user = "", _pass = "", _db = "";
 
 var failed = [];
 
@@ -29,28 +29,38 @@ if(_db == "") {
 }
 
 var u = 'https://' + _user + ":" + _pass + "@" + _up + '/' + _db + '/';
-//console.log(u);
-//return;
 
 function Save(o, rt){
 	if(!o) return;
-	request({uri:u, method:'POST', body:JSON.stringify(o), headers:h}, function (err, resp, b) {
-	  if (err) throw err;
-	  if (resp.statusCode !== 201) {
-	  	var msg = "Could not create document. " + b;
-	  	console.error(msg);
-		if (!rt) {
-			console.error("can not create doc, retying: " + b);
-			Save(o, true);
-		}
-		else {
-			console.error("failed doc twice: " + b);
-			failed[failed.length] = o;
-		}
-	  }
-	  else 
-	  	console.log("OK: " + b);
-	});
+	try {
+		request({
+			uri: u,
+			method: 'POST',
+			body: JSON.stringify(o),
+			headers: h
+		}, function(err, resp, b){
+			if (err) 
+				throw err;
+			if (resp.statusCode !== 201) {
+				var msg = "Could not create document. " + b;
+				console.error(msg);
+				if (!rt) {
+					console.error("can not create doc, retying: " + b);
+					Save(o, true);
+				}
+				else {
+					console.error("failed doc twice: " + b);
+					failed[failed.length] = o;
+				}
+			}
+			else 
+				console.log("OK: " + b);
+		});
+	}
+	catch(e) {
+		console.error("failed doc: " + b);
+		failed[failed.length] = o;
+	}
 }
 
 var fs = require('fs');
